@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immunization Schedule Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        form, #schedule {
+            background: white;
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Immunization Schedule Generator</h2>
+
+    <form id="childForm">
+        <input type="text" id="childName" placeholder="Enter Child's Name" required>
+        <input type="date" id="birthDate" required>
+        <button type="submit">Generate Schedule</button>
+    </form>
+
+    <div id="schedule" style="display:none;">
+        <h3>Vaccination Schedule</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Vaccine</th>
+                    <th>Due Date</th>
+                    <th>Age (Years & Months)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="scheduleTable"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const vaccineSchedule = [
+            { name: "Hepatitis B", months: 0 },
+            { name: "Rotavirus", months: 2 },
+            { name: "DTP (Diphtheria, Tetanus, Pertussis)", months: 2 },
+            { name: "Hib (Haemophilus influenzae type b)", months: 2 },
+            { name: "Polio", months: 2 },
+            { name: "Pneumococcal", months: 2 },
+            { name: "Influenza", months: 6 },
+            { name: "MMR (Measles, Mumps, Rubella)", months: 12 },
+            { name: "Varicella (Chickenpox)", months: 12 },
+            { name: "Hepatitis A", months: 12 },
+            { name: "Tetanus Booster", months: 48 }
+        ];
+
+        document.getElementById("childForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            let childName = document.getElementById("childName").value;
+            let birthDate = new Date(document.getElementById("birthDate").value);
+
+            let scheduleData = [];
+
+            vaccineSchedule.forEach(vaccine => {
+                let dueDate = new Date(birthDate);
+                dueDate.setMonth(birthDate.getMonth() + vaccine.months);
+
+                let ageYears = Math.floor(vaccine.months / 12);
+                let ageMonths = vaccine.months % 12;
+                let ageFormatted = "";
+
+                if (ageYears > 0 && ageMonths > 0) {
+                    ageFormatted = `${ageYears} year${ageYears > 1 ? 's' : ''} ${ageMonths} month${ageMonths > 1 ? 's' : ''}`;
+                } else if (ageYears > 0) {
+                    ageFormatted = `${ageYears} year${ageYears > 1 ? 's' : ''}`;
+                } else {
+                    ageFormatted = `${ageMonths} month${ageMonths > 1 ? 's' : ''}`;
+                }
+
+                scheduleData.push({
+                    name: vaccine.name,
+                    dueDate: dueDate.toISOString().split("T")[0],
+                    ageFormatted: ageFormatted
+                });
+            });
+
+            localStorage.setItem("scheduleData", JSON.stringify(scheduleData));
+            displaySchedule();
+        });
+
+        function displaySchedule() {
+            let scheduleTable = document.getElementById("scheduleTable");
+            scheduleTable.innerHTML = "";
+
+            let storedData = JSON.parse(localStorage.getItem("scheduleData")) || [];
+
+            storedData.forEach((item, index) => {
+                let row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.dueDate}</td>
+                    <td>${item.ageFormatted}</td>
+                    <td><button class="delete-btn" onclick="deleteVaccine(${index})">X</button></td>
+                `;
+                scheduleTable.appendChild(row);
+            });
+
+            document.getElementById("schedule").style.display = "block";
+        }
+
+        function deleteVaccine(index) {
+            let storedData = JSON.parse(localStorage.getItem("scheduleData")) || [];
+            storedData.splice(index, 1);
+            localStorage.setItem("scheduleData", JSON.stringify(storedData));
+            displaySchedule();
+        }
+
+        displaySchedule();
+    </script>
+
+</body>
+</html>
